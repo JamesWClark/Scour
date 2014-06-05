@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<scour>
+  <domains>
+    <domain>
+      <name>rockhurst.int</name>
+      <admin></admin>
+      <password></password>
+    </domain>
+    <domain>
+      <name>student.rockhurst.int</name>
+      <password></password>
+    </domain>
+  </domains>
+</scour>
