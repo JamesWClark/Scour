@@ -12,38 +12,33 @@ using System.Threading;
 namespace Scour {
     class Program {
         static void Main(string[] args) {
-            //one LDAP utility per domain
-            Util.LDAP domain = new Util.LDAP(ConfigurationManager.AppSettings["domain.ldap.url"]);
-            Util.LDAP subDomain = new Util.LDAP(ConfigurationManager.AppSettings["sub.domain.ldap.url"]);
 
+            string domainUrl = ConfigurationManager.AppSettings["domain.ldap.url"];
+            string subUrl = ConfigurationManager.AppSettings["sub.domain.ldap.url"];
             string computerFilter = "(objectClass=computer)";
-            ArrayList domainComputers = domain.SearchByFilter(computerFilter);
-            ArrayList subComputers = subDomain.SearchByFilter(computerFilter);
 
-            //start 2 threads
+            Util.LDAP domain = new Util.LDAP(domainUrl);
+            Util.LDAP sub = new Util.LDAP(subUrl);
+
+            ArrayList domainComputers = domain.SearchByFilter(computerFilter);
+            ArrayList subComputers = sub.SearchByFilter(computerFilter);
+
             Thread domainWin32 = new Thread(new ParameterizedThreadStart(goToAndCollectWin32));
             Thread subWin32 = new Thread(new ParameterizedThreadStart(goToAndCollectWin32));
+
             domainWin32.Start(domainComputers);
             subWin32.Start(subComputers);
         }
         static void goToAndCollectWin32(object obj) {
-            string hostKey = "mongodb.host";
-            string nameKey = "mongodb.database.name";
-            string collectionKey = "mongodb.database.collection.computers";
 
-            var connectionString = ConfigurationManager.AppSettings[hostKey];
-            var client = new MongoClient(connectionString);
-            var server = client.GetServer();
-            var database = server.GetDatabase(ConfigurationManager.AppSettings[nameKey]);
-            var collection = database.GetCollection(ConfigurationManager.AppSettings[collectionKey]);
 
             ArrayList computerNames = (ArrayList)obj;
             foreach (string name in computerNames) {
-                Console.WriteLine(getComputerWin32(name, collection));
+                Console.WriteLine(getComputerWin32(name));
                 Console.WriteLine("\n\n===================================");
             }
         }
-        static string getComputerWin32(string computerName, MongoCollection collection) {
+        static string getComputerWin32(string computerName) {
 
             //prob use these as properties of Computer class
             string baseBoard;
