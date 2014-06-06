@@ -74,10 +74,11 @@
     <Compile Include="Code\SQLiteDatabase.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Util\LDAP.cs" />
     <Compile Include="Util\Win32.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
+    <None Include="App.Release.config" />
     <None Include="App.Debug.config" />
     <None Include="packages.config" />
   </ItemGroup>

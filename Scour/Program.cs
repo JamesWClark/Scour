@@ -12,17 +12,21 @@ using System.Threading;
 namespace Scour {
     class Program {
         static void Main(string[] args) {
+            //one LDAP utility per domain
+            Util.LDAP domain = new Util.LDAP(ConfigurationManager.AppSettings["domain.ldap.url"]);
+            Util.LDAP subDomain = new Util.LDAP(ConfigurationManager.AppSettings["sub.domain.ldap.url"]);
 
-            ArrayList rockhurstComputers = GetComputerNames(ConfigurationManager.AppSettings["rockhurst.int.ldap"]);
-            ArrayList studentComputers = GetComputerNames(ConfigurationManager.AppSettings["student.rockhurst.int.ldap"]);
+            string computerFilter = "(objectClass=computer)";
+            ArrayList domainComputers = domain.SearchByFilter(computerFilter);
+            ArrayList subComputers = subDomain.SearchByFilter(computerFilter);
 
             //start 2 threads
-            Thread rockhurst = new Thread(new ParameterizedThreadStart(goToAndCollect));
-            Thread student = new Thread(new ParameterizedThreadStart(goToAndCollect));
-            rockhurst.Start(rockhurstComputers);
-            student.Start(studentComputers);
+            Thread domainWin32 = new Thread(new ParameterizedThreadStart(goToAndCollectWin32));
+            Thread subWin32 = new Thread(new ParameterizedThreadStart(goToAndCollectWin32));
+            domainWin32.Start(domainComputers);
+            subWin32.Start(subComputers);
         }
-        static void goToAndCollect(object obj) {
+        static void goToAndCollectWin32(object obj) {
             string hostKey = "mongodb.host";
             string nameKey = "mongodb.database.name";
             string collectionKey = "mongodb.database.collection.computers";
