@@ -11,9 +11,9 @@ using System.Threading;
 namespace Scour.Code {
     class Database {
 
-        string hostKey = "mongodb.host";
-        string nameKey = "mongodb.database.name";
-        string collectionKey = "mongodb.database.collection.computers";
+        string hostKey = "mongo.db.host";
+        string nameKey = "mongo.db.name";
+        string collectionKey = "mongo.db.collection.computers";
 
         public void Write() {
             var connectionString = ConfigurationManager.AppSettings[hostKey];

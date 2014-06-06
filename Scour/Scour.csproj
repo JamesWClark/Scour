@@ -78,6 +78,7 @@
     <Compile Include="Util\Win32.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="App.config" />
     <None Include="App.Release.config" />
     <None Include="App.Debug.config" />
     <None Include="packages.config" />
