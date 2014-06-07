@@ -8,57 +8,52 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using System.Threading;
 //using System.Data.SQLite;
+using Scour.Code;
 
 namespace Scour {
     class Program {
         static void Main(string[] args) {
 
-            string domainUrl = ConfigurationManager.AppSettings["domain.ldap.url"];
-            string subUrl = ConfigurationManager.AppSettings["sub.domain.ldap.url"];
-            string computerFilter = "(objectClass=computer)";
-
-            Util.LDAP domain = new Util.LDAP(domainUrl);
-            Util.LDAP sub = new Util.LDAP(subUrl);
-
+            const string computerFilter = "(objectClass=computer)";
+            var domainUrl = ConfigurationManager.AppSettings["domain.ldap.url"];
+            var subUrl = ConfigurationManager.AppSettings["sub.domain.ldap.url"];
+            var domain = new Util.LDAP(domainUrl);
+            var sub = new Util.LDAP(subUrl);
+            var domainWin32 = new Thread(new ParameterizedThreadStart(GoToAndCollectWin32));
+            var subWin32 = new Thread(new ParameterizedThreadStart(GoToAndCollectWin32));
             ArrayList domainComputers = domain.SearchByFilter(computerFilter);
             ArrayList subComputers = sub.SearchByFilter(computerFilter);
-
-            Thread domainWin32 = new Thread(new ParameterizedThreadStart(goToAndCollectWin32));
-            Thread subWin32 = new Thread(new ParameterizedThreadStart(goToAndCollectWin32));
 
             domainWin32.Start(domainComputers);
             subWin32.Start(subComputers);
         }
-        static void goToAndCollectWin32(object obj) {
-
-
-            ArrayList computerNames = (ArrayList)obj;
-            foreach (string name in computerNames) {
-                Console.WriteLine(getComputerWin32(name));
-                Console.WriteLine("\n\n===================================");
+        /// <summary>
+        /// Visits a list of Active Directory computers and collects their Win32 properties
+        /// </summary>
+        /// <param name="obj">Casts input to ArrayList type.</param>
+        static void GoToAndCollectWin32(object obj) {
+            try {
+                var computerNames = (ArrayList)obj;
+                foreach (string computerName in computerNames) {
+                    GetWin32PropertiesFromComputer(computerName);
+                }
+            } catch (InvalidCastException ex) {
+                Console.WriteLine(ex.Message);
             }
         }
-        static string getComputerWin32(string computerName) {
-
-            //prob use these as properties of Computer class
-            string baseBoard;
-            string diskDrive;
-            string processor;
-            string motherboardDevice;
-            string physicalMemory;
-            string videoController;
-            string operatingSystem;
-            string activation;
-
-            Util.Win32 win32 = null;
-
-            StringBuilder builder = new StringBuilder();
+        /// <summary>
+        /// Get a single computer's Win32 properties
+        /// </summary>
+        /// <param name="computerName"></param>
+        /// <returns></returns>
+        static string GetWin32PropertiesFromComputer(string computerName) {
+            var builder = new StringBuilder();
             try {
-
-                string admin = ConfigurationManager.AppSettings["rockhurst.int.admin"];
-                string password = ConfigurationManager.AppSettings["rockhurst.int.admin.password"];
-                string domain = "rockhurst.int";
-                win32 = new Util.Win32(computerName, admin, password, domain);
+                var computer = new Computer();
+                var username = ConfigurationManager.AppSettings["rockhurst.int.admin"];
+                var password = ConfigurationManager.AppSettings["rockhurst.int.admin.password"];
+                var domain = ConfigurationManager.AppSettings[""];
+                var win32 = new Util.Win32(computerName, username, password, domain);
 
                 builder.Append(GetWmiQueryResult(win32.GetBaseBoard()));
                 builder.Append(GetWmiQueryResult(win32.GetDiskDrive()));
