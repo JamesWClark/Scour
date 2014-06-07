@@ -13,15 +13,28 @@ using System.Windows.Forms;
 using Scour.Code;
 using Scour.Code.Components;
 
+//there's a good example of WMI code here:
+//http://code.msdn.microsoft.com/windowsdesktop/Using-WMI-with-C-4e5a9ee1
+
 namespace Scour {
     class Program {
-        static void Main(string[] args)
-        {
 
-            string computerName = SystemInformation.ComputerName;
-            Console.WriteLine(computerName);
+        const string computerFilter = "(objectClass=computer)";
 
-            const string computerFilter = "(objectClass=computer)";
+        static void Main(string[] args) {
+
+
+        }
+
+        static void CollectLocalMachine() {
+            var computerName = SystemInformation.ComputerName;
+            var serverString = @"\\" + computerName + @"\root\cimv2";
+            var scope = new ManagementScope(serverString);
+            GetWin32PropertiesFromComputer(scope);
+        }
+        static void CollectRemoteMachines() {
+
+            
             var domainUrl = ConfigurationManager.AppSettings["domain.ldap.url"];
             var subUrl = ConfigurationManager.AppSettings["sub.domain.ldap.url"];
             var domain = new Util.LDAP(domainUrl);
@@ -49,14 +62,12 @@ namespace Scour {
                 Console.WriteLine(ex.Message);
             }
         }
-
         /// <summary>
         /// Get a single computer's Win32 properties
         /// </summary>
         /// <param name="computerName"></param>
         /// <returns></returns>
-        private static Computer GetWin32PropertiesFromComputer(string computerName)
-        {
+        static Computer GetWin32PropertiesFromComputer(string computerName) {
             var queries = new Dictionary<string, string>()
             {
                 {"Baseboard","SELECT Manufacturer,Model,Product,SerialNumber FROM Win32_BaseBoard"},
@@ -85,62 +96,18 @@ namespace Scour {
 
             return computer;
         }
-
-        /**  */
         static ArrayList GetComputerNames(string ldapString) {
-            ArrayList names = new ArrayList();
-            DirectoryEntry entry = new DirectoryEntry(ConfigurationManager.AppSettings[ldapString]);
-            DirectorySearcher mySearcher = new DirectorySearcher(entry);
-            mySearcher.Filter = ("(objectClass=computer)");
+            var names = new ArrayList();
+            var entry = new DirectoryEntry(ConfigurationManager.AppSettings[ldapString]);
+            var mySearcher = new DirectorySearcher(entry);
+            mySearcher.Filter = (computerFilter);
 
             foreach (SearchResult resEnt in mySearcher.FindAll()) {
-                string name = (resEnt.GetDirectoryEntry().Name.ToString().Remove(0, 3));//remove(0,3)removes the CN= portion of the string
+                var name = (resEnt.GetDirectoryEntry().Name.Remove(0, 3));//remove(0,3)removes the CN= portion of the string
                 names.Add(name);
             }
             return names;
         }
-
-        /****/
-        private void GetServicesForComputer(string computerName) {
-            ManagementScope scope = CreateNewManagementScope(computerName);
-
-            SelectQuery query = new SelectQuery("select * from Win32_Service");
-
-            try {
-                using (var searcher = new ManagementObjectSearcher(scope, query)) {
-                    ManagementObjectCollection services = searcher.Get();
-
-                    List<string> serviceNames =
-                        (from ManagementObject service in services select service["Caption"].ToString()).ToList();
-
-                    lstServices.DataSource = serviceNames;
-                }
-            } catch (Exception exception) {
-                lstServices.DataSource = null;
-                lstServices.Items.Clear();
-                lblErrors.Text = exception.Message;
-                Console.WriteLine(Resources.MainForm_GetServicesForServer_Error__ + exception.Message);
-            }
-        }
-
-        private ManagementScope CreateNewManagementScope(string server) {
-            string serverString = @"\\" + server + @"\root\cimv2";
-
-            ManagementScope scope = new ManagementScope(serverString);
-
-            if (!chkUseCurrentUser.Checked) {
-                ConnectionOptions options = new ConnectionOptions {
-                    Username = txtUsername.Text,
-                    Password = txtPassword.Text,
-                    Impersonation = ImpersonationLevel.Impersonate,
-                    Authentication = AuthenticationLevel.PacketPrivacy
-                };
-                scope.Options = options;
-            }
-
-            return scope;
-        }
-
     }
 }
 
