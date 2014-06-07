@@ -1,19 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using MongoDB.Bson;
+using Scour.Code.Components;
+
 
 namespace Scour.Code {
     class Computer {
-        public string BaseBoard { get; set; }
-        public string HardDisk { get; set; }
-        public string Ram { get; set; }
-        public string Name { get; set; }
-        public string MACAddress { get; set; }
-        public string IPAddress { get; set; }
-        public string ModelNumber { get; set; }
-        public string Manufacturer { get; set; }
-        public string Processor { get; set; }
+        public Baseboard Baseboard { get; set; }
+        public BIOS BIOS { get; set; }
+        public DiskDrive DiskDrive { get; set; }
+        public MotherboardDevice MotherboardDevice { get; set; }
+        public PhysicalMemory PhysicalMemory { get; set; }
+        public Processor Processor { get; set; }
+        public VideoController VideoController { get; set; }
+
+        public override string ToString() {
+            return this.ToJson();
+        }
     }
 }

@@ -52,6 +52,7 @@
     </Reference>
     <Reference Include="System.DirectoryServices" />
     <Reference Include="System.Management" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -61,7 +62,14 @@
   <ItemGroup>
     <Compile Include="Code\Admin.cs" />
     <Compile Include="Code\Authorization.cs" />
+    <Compile Include="Code\Components\Baseboard.cs" />
+    <Compile Include="Code\Components\BIOS.cs" />
+    <Compile Include="Code\Components\DiskDrive.cs" />
+    <Compile Include="Code\Components\PhysicalMemory.cs" />
+    <Compile Include="Code\Components\Processor.cs" />
+    <Compile Include="Code\Components\VideoController.cs" />
     <Compile Include="Code\Computer.cs" />
+    <Compile Include="Code\Components\MotherboardDevice.cs" />
     <Compile Include="Code\Config.cs" />
     <Compile Include="Code\Database.cs" />
     <Compile Include="Code\Domain.cs" />
