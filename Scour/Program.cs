@@ -15,6 +15,7 @@ using Scour.Code.Components;
 
 //there's a good example of WMI code here:
 //http://code.msdn.microsoft.com/windowsdesktop/Using-WMI-with-C-4e5a9ee1
+using Scour.Util;
 
 namespace Scour {
     class Program {
@@ -22,19 +23,22 @@ namespace Scour {
         const string computerFilter = "(objectClass=computer)";
 
         static void Main(string[] args) {
-
-
+            CollectLocalMachine();
         }
 
         static void CollectLocalMachine() {
             var computerName = SystemInformation.ComputerName;
-            var serverString = @"\\" + computerName + @"\root\cimv2";
-            var scope = new ManagementScope(serverString);
-            GetWin32PropertiesFromComputer(scope);
+            var wmi = new WMI(computerName);
+            Computer c = GetComputerProperties(wmi);
+            Console.WriteLine(c.ToJson());
         }
         static void CollectRemoteMachines() {
-
-            
+            /*
+            var computer = new Computer();
+            var username = ConfigurationManager.AppSettings["domain.admin.username"];
+            var password = ConfigurationManager.AppSettings["domain.admin.password"];
+            var domain = ConfigurationManager.AppSettings["domain.ldap.url"].Split(new string[] { "LDAP://" }, StringSplitOptions.None)[1]; //get only the domain.com part
+            */
             var domainUrl = ConfigurationManager.AppSettings["domain.ldap.url"];
             var subUrl = ConfigurationManager.AppSettings["sub.domain.ldap.url"];
             var domain = new Util.LDAP(domainUrl);
@@ -55,7 +59,7 @@ namespace Scour {
             try {
                 var computerNames = (ArrayList)obj;
                 foreach (string computerName in computerNames) {
-                    Computer c = GetWin32PropertiesFromComputer(computerName);
+                    Computer c = GetComputerProperties(new WMI(computerName));
                     Console.WriteLine(c);
                 }
             } catch (InvalidCastException ex) {
@@ -65,9 +69,9 @@ namespace Scour {
         /// <summary>
         /// Get a single computer's Win32 properties
         /// </summary>
-        /// <param name="computerName"></param>
+        /// <param name="wmi"></param>
         /// <returns></returns>
-        static Computer GetWin32PropertiesFromComputer(string computerName) {
+        static Computer GetComputerProperties(WMI wmi) {
             var queries = new Dictionary<string, string>()
             {
                 {"Baseboard","SELECT Manufacturer,Model,Product,SerialNumber FROM Win32_BaseBoard"},
@@ -80,19 +84,15 @@ namespace Scour {
                 {"VideoController","SELECT AdapterCompatibility,AdapterRAM,Name,VideoModeDescription,VideoProcessor,VideoMemoryType FROM Win32_VideoController"}
             };
 
-            var computer = new Computer();
-            var username = ConfigurationManager.AppSettings["domain.admin.username"];
-            var password = ConfigurationManager.AppSettings["domain.admin.password"];
-            var domain = ConfigurationManager.AppSettings["domain.ldap.url"].Split(new string[] { "LDAP://" }, StringSplitOptions.None)[1]; //get only the domain.com part
-            var win32 = new Util.Win32(computerName, username, password, domain);
-
-            computer.Baseboard = new Baseboard(win32.GetQueryResult(queries["Baseboard"]));
-            computer.BIOS = new BIOS(win32.GetQueryResult(queries["BIOS"]));
-            computer.DiskDrive = new DiskDrive(win32.GetQueryResult(queries["DiskDrive"]));
-            computer.MotherboardDevice = new MotherboardDevice(win32.GetQueryResult(queries["MotherboardDevice"]));
-            computer.PhysicalMemory = new PhysicalMemory(win32.GetQueryResult(queries["PhysicalMemory"]));
-            computer.Processor = new Processor(win32.GetQueryResult(queries["Processor"]));
-            computer.VideoController = new VideoController(win32.GetQueryResult(queries["VideoController"]));
+            var computer = new Computer() {
+                Baseboard = new Baseboard(wmi.GetQueryResult(queries["Baseboard"])),
+                BIOS = new BIOS(wmi.GetQueryResult(queries["BIOS"])),
+                DiskDrive = new DiskDrive(wmi.GetQueryResult(queries["DiskDrive"])),
+                MotherboardDevice = new MotherboardDevice(wmi.GetQueryResult(queries["MotherboardDevice"])),
+                PhysicalMemory = new PhysicalMemory(wmi.GetQueryResult(queries["PhysicalMemory"])),
+                Processor = new Processor(wmi.GetQueryResult(queries["Processor"])),
+                VideoController = new VideoController(wmi.GetQueryResult(queries["VideoController"]))
+            };
 
             return computer;
         }
